@@ -2,9 +2,9 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 442
-  ClientWidth = 486
-  Color = clBtnFace
+  ClientHeight = 354
+  ClientWidth = 738
+  Color = clCream
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -12
@@ -14,85 +14,338 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
-  object Label1: TLabel
-    Left = 8
-    Top = 48
-    Width = 35
-    Height = 15
-    Caption = 'Status:'
+  object Splitter1: TSplitter
+    Left = 0
+    Top = 221
+    Width = 738
+    Height = 3
+    Cursor = crVSplit
+    Align = alBottom
+    ExplicitLeft = 408
+    ExplicitTop = 0
+    ExplicitWidth = 309
   end
-  object lbl_Status: TLabel
-    Left = 49
-    Top = 48
-    Width = 72
-    Height = 15
-    Caption = 'Disconnected'
-    Color = clBtnFace
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clRed
-    Font.Height = -12
-    Font.Name = 'Segoe UI'
-    Font.Style = []
-    ParentColor = False
-    ParentFont = False
-  end
-  object btn_Connect: TButton
-    Left = 8
-    Top = 8
-    Width = 113
-    Height = 25
-    Caption = 'Connect'
+  object Memo: TMemo
+    AlignWithMargins = True
+    Left = 3
+    Top = 227
+    Width = 732
+    Height = 124
+    Align = alBottom
+    ScrollBars = ssVertical
     TabOrder = 0
-    OnClick = btn_ConnectClick
+    ExplicitTop = 312
   end
-  object btn_CreateTable: TButton
-    Left = 8
-    Top = 80
-    Width = 113
-    Height = 25
-    Caption = 'Create Table'
+  object gbTables: TGroupBox
+    AlignWithMargins = True
+    Left = 139
+    Top = 3
+    Width = 130
+    Height = 215
+    Align = alLeft
+    Caption = 'Tables'
     TabOrder = 1
-    OnClick = btn_CreateTableClick
+    ExplicitHeight = 230
+    object btn_CreateTable: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Create Table'
+      TabOrder = 0
+      OnClick = btn_CreateTableClick
+      ExplicitLeft = 8
+      ExplicitTop = 39
+      ExplicitWidth = 113
+    end
+    object btn_DestoyTable: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 51
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Destoy Table'
+      TabOrder = 1
+      OnClick = btn_DestoyTableClick
+      ExplicitLeft = 32
+      ExplicitTop = 39
+      ExplicitWidth = 113
+    end
+    object btn_RenameTable: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 82
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Rename Table'
+      TabOrder = 2
+      OnClick = btn_RenameTableClick
+      ExplicitLeft = 3
+      ExplicitTop = 131
+      ExplicitWidth = 135
+    end
+    object btn_TableExists: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 113
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Table Exists'
+      TabOrder = 3
+      OnClick = btn_TableExistsClick
+      ExplicitLeft = 16
+      ExplicitTop = 167
+      ExplicitWidth = 113
+    end
+    object btn_GetTablesInfo: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 144
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Tables Info'
+      TabOrder = 4
+      OnClick = btn_GetTablesInfoClick
+      ExplicitLeft = 3
+      ExplicitTop = 191
+      ExplicitWidth = 113
+    end
   end
-  object btn_AddColumn: TButton
-    Left = 8
-    Top = 111
-    Width = 113
-    Height = 25
-    Caption = 'Add Column'
+  object gbConnection: TGroupBox
+    AlignWithMargins = True
+    Left = 3
+    Top = 3
+    Width = 130
+    Height = 215
+    Align = alLeft
+    Caption = 'Connection'
     TabOrder = 2
-    OnClick = btn_AddColumnClick
+    ExplicitHeight = 230
+    object Label1: TLabel
+      AlignWithMargins = True
+      Left = 5
+      Top = 51
+      Width = 120
+      Height = 15
+      Align = alTop
+      Caption = 'Status:'
+      ExplicitLeft = 13
+      ExplicitTop = 92
+      ExplicitWidth = 175
+    end
+    object lbl_Status: TLabel
+      AlignWithMargins = True
+      Left = 5
+      Top = 72
+      Width = 120
+      Height = 15
+      Align = alTop
+      Caption = 'Disconnected'
+      Color = clBtnFace
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clRed
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentColor = False
+      ParentFont = False
+      ExplicitLeft = 7
+      ExplicitTop = 124
+      ExplicitWidth = 175
+    end
+    object btn_Connect: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Connect'
+      TabOrder = 0
+      OnClick = btn_ConnectClick
+      ExplicitLeft = 8
+      ExplicitTop = 8
+      ExplicitWidth = 113
+    end
   end
-  object btn_DestoyTable: TButton
-    Left = 127
-    Top = 80
-    Width = 113
-    Height = 25
-    Caption = 'Destoy Table'
+  object gbColumns: TGroupBox
+    AlignWithMargins = True
+    Left = 275
+    Top = 3
+    Width = 130
+    Height = 215
+    Align = alLeft
+    Caption = 'Columns'
     TabOrder = 3
-    OnClick = btn_DestoyTableClick
+    ExplicitHeight = 230
+    object btn_AddColumn: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Add Column'
+      TabOrder = 0
+      OnClick = btn_AddColumnClick
+      ExplicitLeft = 7
+    end
+    object btn_DestroyColumn: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 51
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Destroy Column'
+      TabOrder = 1
+      OnClick = btn_DestroyColumnClick
+      ExplicitLeft = 72
+      ExplicitTop = 70
+      ExplicitWidth = 113
+    end
+    object btn_RenameColumn: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 82
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Rename Column'
+      TabOrder = 2
+      OnClick = btn_RenameColumnClick
+      ExplicitLeft = 32
+      ExplicitTop = 111
+      ExplicitWidth = 113
+    end
+    object btn_ColumnExists: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 113
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Column Exists'
+      TabOrder = 3
+      OnClick = btn_ColumnExistsClick
+      ExplicitLeft = 40
+      ExplicitTop = 150
+      ExplicitWidth = 113
+    end
+    object btn_GetColumnsInfo: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 144
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Columns Info'
+      TabOrder = 4
+      OnClick = btn_GetColumnsInfoClick
+      ExplicitLeft = 24
+      ExplicitTop = 190
+      ExplicitWidth = 113
+    end
+    object btn_GetColumnType: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 175
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Column Type'
+      TabOrder = 5
+      OnClick = btn_GetColumnTypeClick
+      ExplicitLeft = 40
+      ExplicitTop = 206
+      ExplicitWidth = 113
+    end
   end
-  object btn_RenameTable: TButton
-    Left = 246
-    Top = 80
-    Width = 113
-    Height = 25
-    Caption = 'Rename Table'
+  object gbRows: TGroupBox
+    AlignWithMargins = True
+    Left = 411
+    Top = 3
+    Width = 130
+    Height = 215
+    Align = alLeft
+    Caption = 'Rows'
     TabOrder = 4
-    OnClick = btn_RenameTableClick
-  end
-  object btn_TableExists: TButton
-    Left = 365
-    Top = 80
-    Width = 113
-    Height = 25
-    Caption = 'Table Exists'
-    TabOrder = 5
-    OnClick = btn_TableExistsClick
+    ExplicitTop = 0
+    object btn_AddRow: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Add Row'
+      TabOrder = 0
+      OnClick = btn_AddRowClick
+      ExplicitLeft = 10
+      ExplicitTop = 28
+    end
+    object btn_ChangeIDName: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 51
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Change ID Name'
+      TabOrder = 1
+      OnClick = btn_ChangeIDNameClick
+      ExplicitLeft = 3
+      ExplicitTop = 108
+    end
+    object btn_ChangeLastIdName: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 82
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Change Last Id Name'
+      TabOrder = 2
+      OnClick = btn_ChangeLastIdNameClick
+      ExplicitLeft = 7
+      ExplicitTop = 113
+    end
+    object btn_GetValueByID: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 113
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Value By ID'
+      TabOrder = 3
+      OnClick = btn_GetValueByIDClick
+      ExplicitLeft = 21
+      ExplicitTop = 164
+    end
+    object btn_GetLastIDValue: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 144
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Last ID Value'
+      TabOrder = 4
+      OnClick = btn_GetLastIDValueClick
+      ExplicitLeft = 7
+      ExplicitTop = 175
+    end
   end
   object Timer: TTimer
     OnTimer = TimerTimer
-    Left = 440
+    Left = 688
     Top = 8
   end
 end

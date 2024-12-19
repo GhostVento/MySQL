@@ -9,65 +9,79 @@ uses
   System.SysUtils, System.Variants, System.Classes,
   {Vcl}
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Vcl.ExtCtrls;
+  Vcl.ExtCtrls, sGroupBox, sEdit, Vcl.Menus, Vcl.ComCtrls;
 
 type
   TForm1 = class(TForm)
     Timer: TTimer;
+    GroupBox1: TGroupBox;
     Memo: TMemo;
-    gbTables: TGroupBox;
-    btn_CreateTable: TButton;
-    btn_DestoyTable: TButton;
     gbConnection: TGroupBox;
+    edt_Driver: TsEdit;
+    edt_Server: TsEdit;
+    edt_Port: TsEdit;
+    edt_UserName: TsEdit;
+    edt_Password: TsEdit;
+    edt_Database: TsEdit;
+    edt_Charset: TsEdit;
     btn_Connect: TButton;
+    MainMenu: TMainMenu;
+    N1: TMenuItem;
+    D1_GetDBInfo: TMenuItem;
+    C1_CreateDB: TMenuItem;
+    D2_DestroyDB: TMenuItem;
+    C2_ChangeDB: TMenuItem;
+    D3_DBExists: TMenuItem;
+    T1: TMenuItem;
+    G1_GetTablesInfo: TMenuItem;
+    C1_CreateTable: TMenuItem;
+    D1_DestroyTable: TMenuItem;
+    R1_RenameTable: TMenuItem;
+    T2_TableExists: TMenuItem;
+    C1: TMenuItem;
+    R1: TMenuItem;
+    G1_GetColsInfo: TMenuItem;
+    G1_GetColType: TMenuItem;
+    A1_AddCol: TMenuItem;
+    D1_DestroyCol: TMenuItem;
+    R2_RenameCol: TMenuItem;
+    C2_ColExists: TMenuItem;
+    G1_GetInfoByID: TMenuItem;
+    G2_GetLastIDInfo: TMenuItem;
+    C2_ChangeNameByID: TMenuItem;
+    C3_ChangeLastIDName: TMenuItem;
+    A1_AddRow: TMenuItem;
+    S1_SearchRowsByName: TMenuItem;
+    Splitter1: TSplitter;
+    Panel1: TPanel;
     Label1: TLabel;
     lbl_Status: TLabel;
-    btn_RenameTable: TButton;
-    btn_TableExists: TButton;
-    btn_GetTablesInfo: TButton;
-    gbColumns: TGroupBox;
-    btn_AddColumn: TButton;
-    btn_DestroyColumn: TButton;
-    btn_RenameColumn: TButton;
-    btn_ColumnExists: TButton;
-    btn_GetColumnsInfo: TButton;
-    btn_GetColumnType: TButton;
-    Splitter1: TSplitter;
-    gbRows: TGroupBox;
-    btn_AddRow: TButton;
-    btn_ChangeIDName: TButton;
-    btn_ChangeLastIdName: TButton;
-    btn_GetValueByID: TButton;
-    btn_GetLastIDValue: TButton;
-    gbDatabase: TGroupBox;
-    btn_CreateDatabase: TButton;
-    btn_DestroyDatabase: TButton;
-    btn_GetDatabaseInfo: TButton;
-    btn_ChangeDatabase: TButton;
     procedure btn_ConnectClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure btn_CreateTableClick(Sender: TObject);
-    procedure btn_AddColumnClick(Sender: TObject);
-    procedure btn_DestoyTableClick(Sender: TObject);
-    procedure btn_RenameTableClick(Sender: TObject);
-    procedure btn_TableExistsClick(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
-    procedure btn_DestroyColumnClick(Sender: TObject);
-    procedure btn_RenameColumnClick(Sender: TObject);
-    procedure btn_ColumnExistsClick(Sender: TObject);
-    procedure btn_GetColumnTypeClick(Sender: TObject);
-    procedure btn_GetColumnsInfoClick(Sender: TObject);
-    procedure btn_GetTablesInfoClick(Sender: TObject);
-    procedure btn_AddRowClick(Sender: TObject);
-    procedure btn_ChangeIDNameClick(Sender: TObject);
-    procedure btn_ChangeLastIdNameClick(Sender: TObject);
-    procedure btn_GetValueByIDClick(Sender: TObject);
-    procedure btn_GetLastIDValueClick(Sender: TObject);
-    procedure btn_CreateDatabaseClick(Sender: TObject);
-    procedure btn_DestroyDatabaseClick(Sender: TObject);
-    procedure btn_GetDatabaseInfoClick(Sender: TObject);
-    procedure btn_ChangeDatabaseClick(Sender: TObject);
+    procedure D1_GetDBInfoClick(Sender: TObject);
+    procedure C1_CreateDBClick(Sender: TObject);
+    procedure D2_DestroyDBClick(Sender: TObject);
+    procedure C2_ChangeDBClick(Sender: TObject);
+    procedure D3_DBExistsClick(Sender: TObject);
+    procedure G1_GetTablesInfoClick(Sender: TObject);
+    procedure C1_CreateTableClick(Sender: TObject);
+    procedure D1_DestroyTableClick(Sender: TObject);
+    procedure R1_RenameTableClick(Sender: TObject);
+    procedure T2_TableExistsClick(Sender: TObject);
+    procedure G1_GetColsInfoClick(Sender: TObject);
+    procedure G1_GetColTypeClick(Sender: TObject);
+    procedure A1_AddColClick(Sender: TObject);
+    procedure D1_DestroyColClick(Sender: TObject);
+    procedure R2_RenameColClick(Sender: TObject);
+    procedure C2_ColExistsClick(Sender: TObject);
+    procedure G1_GetInfoByIDClick(Sender: TObject);
+    procedure G2_GetLastIDInfoClick(Sender: TObject);
+    procedure C2_ChangeNameByIDClick(Sender: TObject);
+    procedure C3_ChangeLastIDNameClick(Sender: TObject);
+    procedure A1_AddRowClick(Sender: TObject);
+    procedure S1_SearchRowsByNameClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -88,6 +102,13 @@ uses
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   SQL := TSQL.Create;
+  SQL.Driver := edt_Driver.Text;
+  SQL.Server := edt_Server.Text;
+  SQL.Port := edt_Port.Text;;
+  SQL.UserName := edt_UserName.Text;
+  SQL.Password := edt_Password.Text;
+  SQL.Database := edt_Database.Text;
+  SQL.Charset := edt_Charset.Text;
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -95,7 +116,143 @@ begin
   SQL.Free;
 end;
 
-{ Connection }
+procedure TForm1.G1_GetColsInfoClick(Sender: TObject);
+var
+  Database, Table: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(Table) <> '') then
+    // Output
+    Memo.Lines.Assign(SQL.GetColumnsInfo(Database, Table));
+end;
+
+procedure TForm1.G1_GetColTypeClick(Sender: TObject);
+var
+  Database, Table, Column: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column Name', 'Column Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
+  then
+    Memo.Lines.Add('Data Type ' + Column + ' ' + SQL.GetColumnType(Database,
+      Table, Column));
+end;
+
+procedure TForm1.G1_GetInfoByIDClick(Sender: TObject);
+var
+  Database, Table, Column, Value: String;
+  RowID: Integer;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column', 'Column', 'name');
+  RowID := StrToInt(InputBox('ID', 'ID', ''));
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '') and
+    (Trim(IntToStr(RowID)) <> '') then
+    Value := SQL.GetRowValueByID(Database, Table, RowID, Column);
+  Memo.Lines.Add('Name ID ' + RowID.ToString + ': ' + Value);
+end;
+
+procedure TForm1.G1_GetTablesInfoClick(Sender: TObject);
+var
+  Database: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  // Check for empty input
+  if Trim(Database) <> '' then
+    // Output
+    Memo.Lines.Assign(SQL.GetTablesInfo(Database));
+end;
+
+procedure TForm1.G2_GetLastIDInfoClick(Sender: TObject);
+var
+  Database, Table, Column, Value: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column', 'Column', 'name');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
+  then
+
+    Value := SQL.GetLastRowValue(Database, Table, Column);
+  Memo.Lines.Add('Last ID Name: ' + Value);
+end;
+
+procedure TForm1.R1_RenameTableClick(Sender: TObject);
+var
+  Database, TableOld, TableNew: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  TableOld := InputBox('Old Table Name', 'Old Table Name', '');
+  TableNew := InputBox('New Table Name', 'New Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(TableOld) <> '') and (Trim(TableNew) <> '')
+  then
+    // Output
+    if SQL.RenameTable(Database, TableOld, TableNew) then
+      Memo.Lines.Add(Format('Table "%s" renamed to "%s" successfully',
+        [TableOld, TableNew]))
+    else
+      ShowMessage(SQL.LastError);
+end;
+
+procedure TForm1.R2_RenameColClick(Sender: TObject);
+var
+  Database, Table, ColumnOld, ColumnNew, ColumnType: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  ColumnOld := InputBox('Column Name', 'Column Name', '');
+  ColumnNew := InputBox('New Column Name', 'New Column Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(ColumnOld) <> '')
+  then
+    ColumnType := InputBox('Column Data Type', 'Column Data Type',
+      SQL.GetColumnType(Database, Table, ColumnOld));
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(ColumnOld) <> '')
+    and (Trim(ColumnNew) <> '') and (Trim(ColumnType) <> '') then
+    if SQL.RenameColumn(Database, Table, ColumnOld, ColumnNew, ColumnType) then
+      Memo.Lines.Add('Column ' + ColumnOld + ' renamed to ' + ColumnNew +
+        ' successfully')
+    else
+      Memo.Lines.Add('Column ' + ColumnOld + ' was not renamed');
+end;
+
+procedure TForm1.S1_SearchRowsByNameClick(Sender: TObject);
+var
+  Database, Table, Name: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Name := InputBox('Find by Name', 'Find by Name', '');
+
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Name) <> '') then
+    Memo.Lines.Assign(SQL.FindRowsByName(Database, Table, Name));
+end;
+
+procedure TForm1.A1_AddRowClick(Sender: TObject);
+var
+  Database, Table, Name, Position: String;
+  Salary: Double;
+  HireDate: TDate;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Name := InputBox('Name', 'Name', 'John Doe');
+  Position := InputBox('Position', 'Position', 'Manager');
+  Salary := StrToFloat(InputBox('Salary', 'Salary', '50000,00'));
+  HireDate := StrToDate(InputBox('HireDate', 'HireDate', DateToStr(Now)));
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Name) <> '') and
+    (Trim(Position) <> '') and (Trim(FloatToStr(Salary)) <> '') and
+    (Trim(DateToStr(HireDate)) <> '') then
+    if SQL.InsertRow(Database, Table, Name, Position, Salary, HireDate) then
+      Memo.Lines.Add('New Row added successfully.');
+end;
 
 procedure TForm1.btn_ConnectClick(Sender: TObject);
 begin
@@ -113,6 +270,14 @@ begin
   end
   else
   begin
+    SQL.Driver := edt_Driver.Text;
+    SQL.Server := edt_Server.Text;
+    SQL.Port := edt_Port.Text;;
+    SQL.UserName := edt_UserName.Text;
+    SQL.Password := edt_Password.Text;
+    SQL.Database := edt_Database.Text;
+    SQL.Charset := edt_Charset.Text;
+
     if SQL.Connect then
     begin
       with lbl_Status do
@@ -123,6 +288,22 @@ begin
       btn_Connect.Caption := 'Disconnect';
     end
   end;
+end;
+
+procedure TForm1.T2_TableExistsClick(Sender: TObject);
+var
+  Database, Table: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(Table) <> '') then
+    // Output
+    if SQL.TableExists(Database, Table) then
+      Memo.Lines.Add(Format('Table "%s" exists', [Table]))
+    else
+      Memo.Lines.Add(Format('Table "%s" does not exists', [Table]))
 end;
 
 procedure TForm1.TimerTimer(Sender: TObject);
@@ -147,35 +328,140 @@ begin
   end;
 end;
 
-{ Database }
-
-procedure TForm1.btn_CreateDatabaseClick(Sender: TObject);
+procedure TForm1.C1_CreateDBClick(Sender: TObject);
 var
   DBName, Charset, Collation: String;
 begin
-  DBName := InputBox('DB Name', 'DB Name', 'test_db');
+  // Input
+  DBName := InputBox('DB Name', 'DB Name', '');
   Charset := InputBox('Charset', 'Charset', 'utf8mb4');
   Collation := InputBox('Collation', 'Collation', 'utf8mb4_unicode_ci');
+
+  // Check for empty input
   if (Trim(DBName) <> '') and (Trim(Charset) <> '') and (Trim(Collation) <> '')
   then
+    // Output
     if SQL.CreateDatabase(DBName, Charset, Collation) then
-      ShowMessage
+      Memo.Lines.Add
         (Format('DB "%s" created with charset "%s" and collation "%s".',
-        [DBName, Charset, Collation]));
+        [DBName, Charset, Collation]))
+    else
+      ShowMessage(SQL.LastError);
 end;
 
-procedure TForm1.btn_DestroyDatabaseClick(Sender: TObject);
+procedure TForm1.C1_CreateTableClick(Sender: TObject);
 var
-  DBName: String;
+  Database, Table: String;
 begin
-  DBName := InputBox('DB Name', 'DB Name', 'test_db');
-  if Trim(DBName) <> '' then
-
-    if SQL.DestroyDatabase(DBName) then
-      ShowMessage('DB ' + DBName + ' destroyed');
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(Table) <> '') then
+    // Output
+    if SQL.CreateTable(Database, Table) then
+      Memo.Lines.Add(Format('Table "%s" created in DB "%s"', [Table, Database]))
+    else
+      ShowMessage(SQL.LastError);
 end;
 
-procedure TForm1.btn_GetDatabaseInfoClick(Sender: TObject);
+procedure TForm1.C2_ChangeDBClick(Sender: TObject);
+var
+  OldDBName, NewDBName, Charset, Collation: String;
+begin
+  // Input
+  OldDBName := InputBox('DB Name', 'DB Name', '');
+  NewDBName := InputBox('New DB Name', 'New DB Name', '');
+  Charset := InputBox('Charset', 'Charset', 'utf8mb4');
+  Collation := InputBox('Collation', 'Collation', 'utf8mb4_unicode_ci');
+  // Check for empty input
+  if (Trim(OldDBName) <> '') and (Trim(NewDBName) <> '') and
+    (Trim(Charset) <> '') and (Trim(Collation) <> '') then
+    // Output
+    if SQL.ChangeDatabase(OldDBName, NewDBName, Charset, Collation) then
+      Memo.Lines.Add(Format('DB "%s" renamed to "%s".', [OldDBName, NewDBName]))
+    else
+      ShowMessage(SQL.LastError);
+end;
+
+procedure TForm1.C2_ChangeNameByIDClick(Sender: TObject);
+var
+  Database, Table, NewName: String;
+  RowID: Integer;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  RowID := StrToInt(InputBox('ID', 'ID', ''));
+  NewName := InputBox('New Name', 'New Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and
+    (Trim(IntToStr(RowID)) <> '') and (Trim(NewName) <> '') then
+    if SQL.UpdateRowName(Database, Table, RowID, NewName) then
+      Memo.Lines.Add('Name updated successfully.');
+end;
+
+procedure TForm1.C2_ColExistsClick(Sender: TObject);
+var
+  Database, Table, Column: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column Name', 'Column Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
+  then
+    if SQL.ColumnExists(Database, Table, Column) then
+      Memo.Lines.Add('Column ' + Column + ' exists in Table ' + Table)
+    else
+      Memo.Lines.Add('Column ' + Column + ' not exists in Table ' + Table)
+end;
+
+procedure TForm1.C3_ChangeLastIDNameClick(Sender: TObject);
+var
+  Database, Table, NewName: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  NewName := InputBox('New Name', 'New Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(NewName) <> '')
+  then
+    if SQL.UpdateLastRowName(Database, Table, NewName) then
+      Memo.Lines.Add('Name updated successfully.');
+end;
+
+procedure TForm1.D1_DestroyColClick(Sender: TObject);
+var
+  Database, Table, Column: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column Name', 'Column Name', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
+  then
+    if SQL.DestroyColumn(Database, Table, Column) then
+      Memo.Lines.Add('Column ' + Column + ' has been deleted from Table ' +
+        Table + ' successfully')
+    else
+      Memo.Lines.Add('Column ' + Column +
+        ' was not deleted from Table ' + Table)
+end;
+
+procedure TForm1.D1_DestroyTableClick(Sender: TObject);
+var
+  Database, Table: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(Table) <> '') then
+    // Output
+    if SQL.DestroyTable(Database, Table) then
+      Memo.Lines.Add(Format('Table "%s" destroyed in DB "%s"',
+        [Table, Database]))
+    else
+      ShowMessage(SQL.LastError);
+end;
+
+procedure TForm1.D1_GetDBInfoClick(Sender: TObject);
 var
   Databases: TStringList;
   I: Integer;
@@ -190,243 +476,50 @@ begin
   end;
 end;
 
-procedure TForm1.btn_ChangeDatabaseClick(Sender: TObject);
+procedure TForm1.D2_DestroyDBClick(Sender: TObject);
 var
-  OldDBName, NewDBName, Charset, Collation: String;
+  DBName: String;
 begin
-  OldDBName := InputBox('DB Name', 'DB Name', 'old_db');
-  NewDBName := InputBox('New DB Name', 'New DB Name', 'new_db');
-  Charset := InputBox('Charset', 'Charset', 'utf8mb4');
-  Collation := InputBox('Collation', 'Collation', 'utf8mb4_unicode_ci');
-  if (Trim(OldDBName) <> '') and (Trim(NewDBName) <> '') and
-    (Trim(Charset) <> '') and (Trim(Collation) <> '') then
-  if SQL.ChangeDatabase(OldDBName, NewDBName, Charset, Collation) then
-    ShowMessage(Format('DB "%s" renamed to "%s".', [OldDBName, NewDBName]))
-  else
-    ShowMessage('Error');
-end;
-
-{ Table }
-
-procedure TForm1.btn_CreateTableClick(Sender: TObject);
-var
-  Table: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  if Trim(Table) <> '' then
-    if SQL.CreateTable(Table) then
-      Memo.Lines.Add('Table ' + Table + ' created')
+  // Input
+  DBName := InputBox('DB Name', 'DB Name', '');
+  // Check for empty input
+  if Trim(DBName) <> '' then
+    // Output
+    if SQL.DestroyDatabase(DBName) then
+      Memo.Lines.Add(Format('DB "%s" destroyed', [DBName]))
     else
-      Memo.Lines.Add('Table ' + Table + ' not created')
+      ShowMessage(SQL.LastError);
 end;
 
-procedure TForm1.btn_DestoyTableClick(Sender: TObject);
+procedure TForm1.D3_DBExistsClick(Sender: TObject);
 var
-  Table: String;
+  DBName: String;
 begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  if Trim(Table) <> '' then
-    if SQL.DestroyTable(Table) then
-      Memo.Lines.Add('Table ' + Table + ' destroyed')
+  // Input
+  DBName := InputBox('DB Name', 'DB Name', '');
+  // Check for empty input
+  if Trim(DBName) <> '' then
+    // Output
+    if SQL.DatabaseExists(DBName) then
+      Memo.Lines.Add(Format('DB "%s" exists', [DBName]))
     else
-      Memo.Lines.Add('Table ' + Table + ' not destoyed');
+      Memo.Lines.Add(Format('DB "%s" does not exists', [DBName]));
 end;
 
-procedure TForm1.btn_RenameTableClick(Sender: TObject);
+procedure TForm1.A1_AddColClick(Sender: TObject);
 var
-  TableOld: String;
-  TableNew: String;
+  Database, Table, Column: String;
 begin
-  TableOld := InputBox('Old Table Name', 'Old Table Name', '');
-  TableNew := InputBox('New Table Name', 'New Table Name', '');
-  if (Trim(TableOld) <> '') and (Trim(TableNew) <> '') then
-    if SQL.RenameTable(TableOld, TableNew) then
-      Memo.Lines.Add('Table ' + TableOld + ' renamed to ' + TableNew +
-        ' successfully')
-    else
-      Memo.Lines.Add('Table  ' + TableOld + ' not renamed')
-end;
-
-procedure TForm1.btn_TableExistsClick(Sender: TObject);
-var
-  Table: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  if Trim(Table) <> '' then
-    if SQL.TableExists(Table) then
-      Memo.Lines.Add('Table ' + Table + ' exists')
-    else
-      Memo.Lines.Add('Table ' + Table + ' not exists')
-end;
-
-{ Column }
-
-procedure TForm1.btn_AddColumnClick(Sender: TObject);
-var
-  Table: String;
-  Column: String;
-begin
+  Database := InputBox('Database', 'Database', '');
   Table := InputBox('Table Name', 'Table Name', '');
   Column := InputBox('Column Name', 'Column Name', '');
-  if (Trim(Table) <> '') and (Trim(Column) <> '') then
-    if SQL.AddColumn(Table, Column) then
-      Memo.Lines.Add('Column ' + Column + ' has been added to Table ' + Table + ' successfully')
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
+  then
+    if SQL.AddColumn(Database, Table, Column) then
+      Memo.Lines.Add('Column ' + Column + ' has been added to Table ' + Table +
+        ' successfully')
     else
       Memo.Lines.Add('Column ' + Column + ' was not added to Table ' + Table)
-end;
-
-procedure TForm1.btn_DestroyColumnClick(Sender: TObject);
-var
-  Table: String;
-  Column: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Column := InputBox('Column Name', 'Column Name', '');
-  if (Trim(Table) <> '') and (Trim(Column) <> '') then
-    if SQL.DestroyColumn(Table, Column) then
-      Memo.Lines.Add('Column ' + Column + ' has been deleted from Table ' + Table + ' successfully')
-    else
-      Memo.Lines.Add('Column ' + Column + ' was not deleted from Table ' + Table)
-end;
-
-procedure TForm1.btn_RenameColumnClick(Sender: TObject);
-var
-  Table: String;
-  ColumnOld: String;
-  ColumnNew: String;
-  ColumnType: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  ColumnOld := InputBox('Column Name', 'Column Name', '');
-  ColumnNew := InputBox('New Column Name', 'New Column Name', '');
-  ColumnType := InputBox('Column Data Type', 'Column Data Type',
-    SQL.GetColumnType(Table, ColumnOld));
-  if (Trim(Table) <> '') and (Trim(ColumnOld) <> '') and (Trim(ColumnNew) <> '')
-    and (Trim(ColumnType) <> '') then
-    if SQL.RenameColumn(Table, ColumnOld, ColumnNew, ColumnType) then
-      Memo.Lines.Add('Column ' + ColumnOld + ' renamed to ' + ColumnNew +
-        ' successfully')
-    else
-      Memo.Lines.Add('Column ' + ColumnOld + ' was not renamed');
-end;
-
-procedure TForm1.btn_AddRowClick(Sender: TObject);
-var
-  Table: String;
-  Name, Position: String;
-  Salary: Double;
-  HireDate: TDate;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Name := InputBox('Name', 'Name', 'John Doe');
-  Position := InputBox('Position', 'Position', 'Manager');
-  Salary := StrToFloat(InputBox('Salary', 'Salary', '50000,00'));
-  HireDate := StrToDate(InputBox('HireDate', 'HireDate', DateToStr(Now)));
-  if (Trim(Table) <> '') and (Trim(Name) <> '') and (Trim(Position) <> '') and
-    (Trim(FloatToStr(Salary)) <> '') and (Trim(DateToStr(HireDate)) <> '') then
-    if SQL.InsertRow(Table, Name, Position, Salary, HireDate) then
-      ShowMessage('New Row added successfully.')
-    else
-      ShowMessage('Error.');
-end;
-
-procedure TForm1.btn_ColumnExistsClick(Sender: TObject);
-var
-  Table: String;
-  Column: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Column := InputBox('Column Name', 'Column Name', '');
-  if (Trim(Table) <> '') and (Trim(Column) <> '') then
-    if SQL.ColumnExists(Table, Column) then
-      Memo.Lines.Add('Column ' + Column + ' exists in Table ' + Table)
-    else
-      Memo.Lines.Add('Column ' + Column + ' not exists in Table ' + Table)
-end;
-
-procedure TForm1.btn_GetColumnTypeClick(Sender: TObject);
-var
-  Table: String;
-  Column: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Column := InputBox('Column Name', 'Column Name', '');
-  if (Trim(Table) <> '') and (Trim(Column) <> '') then
-    Memo.Lines.Add('Data Type ' + Column + ' ' +
-      SQL.GetColumnType(Table, Column));
-end;
-
-procedure TForm1.btn_GetTablesInfoClick(Sender: TObject);
-begin
-  Memo.Lines.Assign(SQL.GetTablesInfo);
-end;
-
-procedure TForm1.btn_GetColumnsInfoClick(Sender: TObject);
-var
-  Table: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  if (Trim(Table) <> '') then
-  begin
-    Memo.Lines.Assign(SQL.GetColumnsInfo(Table));
-  end;
-end;
-
-procedure TForm1.btn_ChangeIDNameClick(Sender: TObject);
-var
-  Table: String;
-  RowID: Integer;
-  NewName: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  RowID := StrToInt(InputBox('ID', 'ID', ''));
-  NewName := InputBox('New Name', 'New Name', 'Jane Doe');
-  if (Trim(Table) <> '') and (Trim(IntToStr(RowID)) <> '') and
-    (Trim(NewName) <> '') then
-    if SQL.UpdateRowName(Table, RowID, NewName) then
-      ShowMessage('Name updated successfully.')
-    else
-      ShowMessage('Error');
-end;
-
-procedure TForm1.btn_ChangeLastIdNameClick(Sender: TObject);
-var
-  Table: String;
-  NewName: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  NewName := InputBox('New Name', 'New Name', 'Jane Doe');
-  if (Trim(Table) <> '') and (Trim(NewName) <> '') then
-    if SQL.UpdateLastRowName(Table, NewName) then
-      ShowMessage('Name updated successfully.')
-    else
-      ShowMessage('Error.');
-end;
-
-procedure TForm1.btn_GetValueByIDClick(Sender: TObject);
-var
-  Table, Column, Value: String;
-  RowID: Integer;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Column := InputBox('Column', 'Column', 'name');
-  RowID := StrToInt(InputBox('ID', 'ID', ''));
-  if (Trim(Table) <> '') and (Trim(Column) <> '') and
-    (Trim(IntToStr(RowID)) <> '') then
-    Value := SQL.GetRowValueByID(Table, RowID, Column);
-  Memo.Lines.Add('Name ID ' + RowID.ToString + ': ' + Value);
-end;
-
-procedure TForm1.btn_GetLastIDValueClick(Sender: TObject);
-var
-  Table, Column, Value: String;
-begin
-  Table := InputBox('Table Name', 'Table Name', '');
-  Column := InputBox('Column', 'Column', 'name');
-  if (Trim(Table) <> '') and (Trim(Column) <> '') then
-
-    Value := SQL.GetLastRowValue(Table, Column);
-  Memo.Lines.Add('Last ID Name: ' + Value);
 end;
 
 end.

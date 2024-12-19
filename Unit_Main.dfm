@@ -38,13 +38,14 @@ object Form1: TForm1
   end
   object gbTables: TGroupBox
     AlignWithMargins = True
-    Left = 139
+    Left = 275
     Top = 3
     Width = 130
     Height = 215
     Align = alLeft
     Caption = 'Tables'
     TabOrder = 1
+    ExplicitLeft = 139
     ExplicitHeight = 230
     object btn_CreateTable: TButton
       AlignWithMargins = True
@@ -176,13 +177,14 @@ object Form1: TForm1
   end
   object gbColumns: TGroupBox
     AlignWithMargins = True
-    Left = 275
+    Left = 411
     Top = 3
     Width = 130
     Height = 215
     Align = alLeft
     Caption = 'Columns'
     TabOrder = 3
+    ExplicitLeft = 275
     ExplicitHeight = 230
     object btn_AddColumn: TButton
       AlignWithMargins = True
@@ -269,13 +271,14 @@ object Form1: TForm1
   end
   object gbRows: TGroupBox
     AlignWithMargins = True
-    Left = 411
+    Left = 547
     Top = 3
     Width = 130
     Height = 215
     Align = alLeft
     Caption = 'Rows'
     TabOrder = 4
+    ExplicitLeft = 411
     ExplicitTop = 0
     object btn_AddRow: TButton
       AlignWithMargins = True
@@ -341,6 +344,68 @@ object Form1: TForm1
       OnClick = btn_GetLastIDValueClick
       ExplicitLeft = 7
       ExplicitTop = 175
+    end
+  end
+  object gbDatabase: TGroupBox
+    AlignWithMargins = True
+    Left = 139
+    Top = 3
+    Width = 130
+    Height = 215
+    Align = alLeft
+    Caption = 'Database'
+    TabOrder = 5
+    ExplicitLeft = 123
+    ExplicitTop = 6
+    object btn_CreateDatabase: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Create Database'
+      TabOrder = 0
+      OnClick = btn_CreateDatabaseClick
+      ExplicitLeft = 10
+      ExplicitTop = 28
+    end
+    object btn_DestroyDatabase: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 51
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Destroy Database'
+      TabOrder = 1
+      OnClick = btn_DestroyDatabaseClick
+      ExplicitLeft = 7
+    end
+    object btn_GetDatabaseInfo: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 82
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Get Databases Info'
+      TabOrder = 2
+      OnClick = btn_GetDatabaseInfoClick
+      ExplicitLeft = 3
+    end
+    object btn_ChangeDatabase: TButton
+      AlignWithMargins = True
+      Left = 5
+      Top = 113
+      Width = 120
+      Height = 25
+      Align = alTop
+      Caption = 'Change Database'
+      TabOrder = 3
+      OnClick = btn_ChangeDatabaseClick
+      ExplicitLeft = 0
+      ExplicitTop = 144
     end
   end
   object Timer: TTimer

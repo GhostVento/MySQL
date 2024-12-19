@@ -20,8 +20,15 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    // Connection
     function Connect: Boolean;
     function Disconnect: Boolean;
+    // Database
+    function CreateDatabase(DatabaseName, Charset, Collation: String): Boolean;
+    function DestroyDatabase(DatabaseName: String): Boolean;
+    function GetDatabaseList: TStringList;
+    function ChangeDatabase(OldDatabase, NewDatabase, NewCharset, NewCollation: String): Boolean;
+    procedure ExecuteSQL(SQL: String);
     // Table
     function CreateTable(Table: String): Boolean;
     function DestroyTable(Table: String): Boolean;
@@ -57,6 +64,8 @@ var
 
 implementation
 
+{$HINTS OFF}
+
 { TSQL }
 
 constructor TSQL.Create;
@@ -79,6 +88,159 @@ begin
   FDConnection.Free;
 end;
 
+{ Database }
+
+function TSQL.CreateDatabase(DatabaseName, Charset, Collation: String): Boolean;
+begin
+  Result := False;
+  try
+    FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := FDConnection;
+      FDQuery.SQL.Text := Format(
+        'CREATE DATABASE `%s` CHARACTER SET %s COLLATE %s',
+        [DatabaseName, Charset, Collation]
+      );
+      FDQuery.ExecSQL;
+      Result := True;
+    finally
+      FDQuery.Free;
+    end;
+  except
+    on E: Exception do
+    begin
+      Result := False;
+      ShowMessage('Error creating database: ' + E.Message);
+    end;
+  end;
+end;
+
+function TSQL.DestroyDatabase(DatabaseName: String): Boolean;
+begin
+  Result := False;
+  try
+    FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := FDConnection;
+      FDQuery.SQL.Text := Format('DROP DATABASE `%s`', [DatabaseName]);
+      FDQuery.ExecSQL;
+      Result := True;
+    finally
+      FDQuery.Free;
+    end;
+  except
+    on E: Exception do
+    begin
+      Result := False;
+      ShowMessage('Error deleting database: ' + E.Message);
+    end;
+  end;
+end;
+
+function TSQL.GetDatabaseList: TStringList;
+var
+  DatabaseList: TStringList;
+begin
+  DatabaseList := TStringList.Create;
+  try
+    FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := FDConnection;
+      FDQuery.SQL.Text :=
+        'SELECT schema_name, default_character_set_name, default_collation_name ' +
+        'FROM information_schema.schemata ' +
+        'ORDER BY schema_name';
+      FDQuery.Open;
+
+      // Перебираем строки результата и добавляем их в список
+      while not FDQuery.Eof do
+      begin
+        DatabaseList.Add(Format('%s: Charset=%s, Collation=%s',
+          [FDQuery.FieldByName('schema_name').AsString,
+           FDQuery.FieldByName('default_character_set_name').AsString,
+           FDQuery.FieldByName('default_collation_name').AsString]));
+        FDQuery.Next;
+      end;
+    except
+      on E: Exception do
+      begin
+        DatabaseList.Add('Error: ' + E.Message);
+      end;
+    end;
+  finally
+    FDQuery.Free;
+    Result := DatabaseList; // Возвращаем результат
+  end;
+end;
+
+function TSQL.ChangeDatabase(OldDatabase, NewDatabase, NewCharset, NewCollation: String): Boolean;
+var
+  TableName: String;
+begin
+  Result := False;
+  FDQuery := TFDQuery.Create(nil);
+  try
+    try
+      // Создаем новую базу данных с новым именем, Charset и Collation
+      FDQuery.Connection := FDConnection;
+      FDQuery.SQL.Text := Format(
+        'CREATE DATABASE %s CHARACTER SET %s COLLATE %s',
+        [NewDatabase, NewCharset, NewCollation]
+      );
+      FDQuery.ExecSQL;
+
+      // Получаем список таблиц из старой базы данных
+      FDQuery.SQL.Text :=
+      'SELECT table_name FROM information_schema.tables WHERE table_schema = :OldDatabase';
+
+      FDQuery.ParamByName('OldDatabase').AsString := OldDatabase;
+      FDQuery.Open;
+
+      // Перемещаем каждую таблицу в новую базу данных
+      while not FDQuery.Eof do
+      begin
+        TableName := FDQuery.FieldByName('table_name').AsString;
+
+        // Перенос таблицы
+        ExecuteSQL(Format(
+          'RENAME TABLE %s.%s TO %s.%s',
+          [OldDatabase, TableName, NewDatabase, TableName]
+        ));
+        FDQuery.Next;
+      end;
+
+      // Удаляем старую базу данных
+      ExecuteSQL(Format('DROP DATABASE %s', [OldDatabase]));
+
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        ShowMessage('Error: ' + E.Message);
+      end;
+    end;
+  finally
+    FDQuery.Free;
+  end;
+end;
+
+// Вспомогательная функция для выполнения SQL-запросов без параметров
+procedure TSQL.ExecuteSQL(SQL: String);
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := FDConnection;
+    Query.SQL.Text := SQL;
+    Query.ExecSQL;
+  finally
+    Query.Free;
+  end;
+end;
+
+{ Connection }
+
 function TSQL.Connect: Boolean;
 begin
   if not FDConnection.Connected then
@@ -92,7 +254,7 @@ begin
       on E: Exception do
       begin
         Result := False;
-        ShowMessage('Ошибка: ' + E.Message);
+        ShowMessage('Error: ' + E.Message);
       end;
     end
   else
@@ -112,12 +274,14 @@ begin
       on E: Exception do
       begin
         Result := False;
-        ShowMessage('Ошибка: ' + E.Message);
+        ShowMessage('Error: ' + E.Message);
       end;
     end
   else
     Result := False;
 end;
+
+{ Tables }
 
 function TSQL.CreateTable(Table: String): Boolean;
 begin
@@ -137,7 +301,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -158,7 +322,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -179,14 +343,13 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
 
 function TSQL.TableExists(Table: String): Boolean;
 begin
-{$HINTS ON}
   Result := False;
   try
     FDQuery := TFDQuery.Create(nil);
@@ -208,10 +371,9 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
-{$HINTS OFF}
 end;
 
 function TSQL.GetTablesInfo: TStringList;
@@ -240,14 +402,16 @@ begin
     except
       on E: Exception do
       begin
-        TablesList.Add('Ошибка: ' + E.Message);
+        TablesList.Add('Error: ' + E.Message);
       end;
     end;
   finally
     FDQuery.Free;
-    Result := TablesList; // Возвращаем результат
+    Result := TablesList;
   end;
 end;
+
+{ Columns }
 
 function TSQL.AddColumn(Table, Column: String): Boolean;
 begin
@@ -267,7 +431,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -289,7 +453,7 @@ begin
     end;
   except
     on E: Exception do
-      ShowMessage('Ошибка при удалении столбца: ' + E.Message);
+      ShowMessage('Error while deleting column: ' + E.Message);
   end;
 end;
 
@@ -306,12 +470,12 @@ begin
       );
       FDQuery.ExecSQL;
       Result := True;
-      ShowMessage('Столбец переименован успешно.');
+      ShowMessage('Column renamed successfully.');
     except
       on E: Exception do
       begin
         Result := False;
-        ShowMessage('Ошибка: ' + E.Message);
+        ShowMessage('Error: ' + E.Message);
       end;
     end;
   finally
@@ -340,7 +504,7 @@ begin
       on E: Exception do
       begin
         Result := False;
-        ShowMessage('Ошибка: ' + E.Message);
+        ShowMessage('Error: ' + E.Message);
       end;
     end;
   finally
@@ -367,10 +531,10 @@ begin
       if not FDQuery.IsEmpty then
         Result := FDQuery.Fields[0].AsString // Полный тип данных столбца
       else
-        raise Exception.CreateFmt('Столбец "%s" в таблице "%s" не найден.', [Column, Table]);
+        raise Exception.CreateFmt('Column "%s" in Table "%s" not found.', [Column, Table]);
     except
       on E: Exception do
-        raise Exception.Create('Ошибка при получении типа данных: ' + E.Message);
+        raise Exception.Create('Error getting data type: ' + E.Message);
     end;
   finally
     FDQuery.Free;
@@ -405,7 +569,7 @@ begin
     except
       on E: Exception do
       begin
-        ColumnsList.Add('Ошибка: ' + E.Message);
+        ColumnsList.Add('Error: ' + E.Message);
       end;
     end;
   finally
@@ -413,6 +577,8 @@ begin
     Result := ColumnsList; // Возвращаем результат
   end;
 end;
+
+{ Rows }
 
 function TSQL.InsertRow(Table, Name, Position: String; Salary: Double; HireDate: TDate): Boolean;
 begin
@@ -440,7 +606,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -471,7 +637,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -510,7 +676,7 @@ begin
     on E: Exception do
     begin
       Result := False;
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -536,7 +702,7 @@ begin
       if not FDQuery.IsEmpty then
         Result := FDQuery.FieldByName(Column).AsString
       else
-        raise Exception.CreateFmt('Запись с ID %d в таблице "%s" не найдена.', [ID, Table]);
+        raise Exception.CreateFmt('Record with ID %d in Table "%s" not found.', [ID, Table]);
     finally
       FDQuery.Free;
     end;
@@ -544,7 +710,7 @@ begin
     on E: Exception do
     begin
       Result := ''; // Возвращаем пустую строку в случае ошибки
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
@@ -568,7 +734,7 @@ begin
       if not FDQuery.IsEmpty then
         Result := FDQuery.FieldByName(Column).AsString
       else
-        raise Exception.CreateFmt('В таблице "%s" нет записей.', [Table]);
+        raise Exception.CreateFmt('There are no records in Table "%s".', [Table]);
     finally
       FDQuery.Free;
     end;
@@ -576,10 +742,9 @@ begin
     on E: Exception do
     begin
       Result := ''; // Возвращаем пустую строку в случае ошибки
-      ShowMessage('Ошибка: ' + E.Message);
+      ShowMessage('Error: ' + E.Message);
     end;
   end;
 end;
-
 
 end.

@@ -74,6 +74,11 @@ type
     function GetRowValueByID(Database, Table: String; ID: Integer; Column: String): String;
     function GetLastRowValue(Database, Table: String; Column: String): String;
     function FindRowsByName(Database, Table, Name: String): TStringList;
+    function FindRowsByColumn(Database, Table, Column, Value: String): TStringList;
+    function GetRowValuesByID(Database, Table: String; ID: Integer): TStringList;
+    function UpdateRow(Database, Table, Column: String; RowID: Integer; NewValue: Variant): Boolean;
+    // Grid
+    function LoadTableIntoDBGrid(Database, Table: String; DataSource: TDataSource): Boolean;
   end;
 
 var
@@ -225,7 +230,7 @@ begin
     // Создаем новую базу данных с новым именем, Charset и Collation
     FDQuery.Connection := FDConnection;
     FDQuery.SQL.Text := Format(
-      'CREATE DATABASE %s CHARACTER SET %s COLLATE %s',
+      'CREATE DATABASE `%s` CHARACTER SET %s COLLATE %s',
       [NewDatabase, NewCharset, NewCollation]
     );
     FDQuery.ExecSQL;
@@ -244,9 +249,10 @@ begin
 
       // Перенос таблицы
       ExecuteSQL(Format(
-        'RENAME TABLE %s.%s TO %s.%s',
+        'RENAME TABLE `%s`.`%s` TO `%s`.`%s`',
         [OldDatabase, TableName, NewDatabase, TableName]
       ));
+
       FDQuery.Next;
     end;
 
@@ -280,13 +286,11 @@ begin
   Result := False;
   try
     FDQuery.Connection := FDConnection;
-
     // Выполняем запрос для проверки существования базы данных
     FDQuery.SQL.Text :=
       'SELECT COUNT(*) AS cnt FROM information_schema.schemata WHERE schema_name = :DatabaseName';
     FDQuery.ParamByName('DatabaseName').AsString := DatabaseName;
     FDQuery.Open;
-
     // Если COUNT > 0, база данных существует
     Result := FDQuery.FieldByName('cnt').AsInteger > 0;
   except
@@ -339,18 +343,15 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Переключаемся на указанную базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Создаём таблицу в указанной базе данных
     FDQuery.SQL.Text := Format(
-      'CREATE TABLE `%s` (' +
+      'CREATE TABLE `%s`.`%s` (' +
       'id INT AUTO_INCREMENT PRIMARY KEY, ' +
       'name VARCHAR(100) NOT NULL, ' +
       'position VARCHAR(50), ' +
       'salary DECIMAL(10, 2), ' +
       'hire_date DATE' +
-      ');', [Table]
+      ');', [Database, Table]
     );
     FDQuery.ExecSQL;
     Result := True;
@@ -365,12 +366,8 @@ begin
   Result := False;
   try
     FDQuery.Connection := FDConnection;
-
-    // Переключаемся на указанную базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Удаляем таблицу
-    FDQuery.SQL.Text := Format('DROP TABLE IF EXISTS `%s`;', [Table]);
+    FDQuery.SQL.Text := Format('DROP TABLE IF EXISTS `%s`.`%s`;', [Database, Table]);
     FDQuery.ExecSQL;
     Result := True;
   except
@@ -385,11 +382,8 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Переключаемся на указанную базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Переименовываем таблицу
-    FDQuery.SQL.Text := Format('RENAME TABLE `%s` TO `%s`;', [TableOld, TableNew]);
+    FDQuery.SQL.Text := Format('RENAME TABLE `%s`.`%s` TO `%s`.`%s`;', [Database, TableOld, Database, TableNew]);
     FDQuery.ExecSQL;
     Result := True;
   except
@@ -464,11 +458,8 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Выбираем базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Выполняем запрос добавления столбца
-    FDQuery.SQL.Text := Format('ALTER TABLE `%s` ADD COLUMN `%s` VARCHAR(100) DEFAULT NULL;', [Table, Column]);
+    FDQuery.SQL.Text := Format('ALTER TABLE `%s`.`%s` ADD COLUMN `%s` VARCHAR(100) DEFAULT NULL;', [Database, Table, Column]);
     FDQuery.ExecSQL;
     Result := True;
   except
@@ -483,11 +474,8 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Выбираем базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Выполняем запрос удаления столбца
-    FDQuery.SQL.Text := Format('ALTER TABLE `%s` DROP COLUMN `%s`', [Table, Column]);
+    FDQuery.SQL.Text := Format('ALTER TABLE `%s`.`%s` DROP COLUMN `%s`;', [Database, Table, Column]);
     FDQuery.ExecSQL;
     Result := True;
   except
@@ -502,11 +490,11 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Выбираем базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Выполняем запрос изменения имени столбца
-    FDQuery.SQL.Text := Format('ALTER TABLE `%s` CHANGE `%s` `%s` %s', [Table, ColumnOld, ColumnNew, ColumnType]);
+    FDQuery.SQL.Text := Format(
+      'ALTER TABLE `%s`.`%s` CHANGE `%s` `%s` %s;',
+      [Database, Table, ColumnOld, ColumnNew, ColumnType]
+    );
     FDQuery.ExecSQL;
     Result := True;
     ShowMessage('Column renamed successfully.');
@@ -610,28 +598,37 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Выбираем текущую базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
-    // Выполняем запрос вставки строки
+    // Выполняем запрос вставки строки, указывая базу данных явно
     FDQuery.SQL.Text := Format(
-      'INSERT INTO `%s` (name, position, salary, hire_date) ' +
+      'INSERT INTO `%s`.`%s` (name, position, salary, hire_date) ' +
       'VALUES (:Name, :Position, :Salary, :HireDate);',
-      [Table]);
+      [Database, Table]
+    );
 
-    // Привязка параметров
+    // Привязываем параметры
     FDQuery.ParamByName('Name').AsString := Name;
     FDQuery.ParamByName('Position').AsString := Position;
     FDQuery.ParamByName('Salary').AsFloat := Salary;
     FDQuery.ParamByName('HireDate').AsDate := HireDate;
 
+    // Выполняем запрос
     FDQuery.ExecSQL;
+
+    // Если используется транзакция, фиксируем её
+    if FDConnection.InTransaction then
+      FDConnection.Commit;
+
     Result := True;
   except
     on E: Exception do
+    begin
       FLastError := E.Message;
+      // Выводим ошибку, чтобы она была видна
+      ShowMessage('Error: ' + E.Message);
+    end;
   end;
 end;
+
 
 function TSQL.UpdateRowName(Database, Table: String; RowID: Integer; NewName: String): Boolean;
 begin
@@ -639,13 +636,11 @@ begin
   try
     FDQuery.Connection := FDConnection;
 
-    // Выбираем текущую базу данных
-    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
-
     // Выполняем запрос обновления строки
     FDQuery.SQL.Text := Format(
-      'UPDATE `%s` SET name = :NewName WHERE id = :RowID;',
-      [Table]);
+      'UPDATE `%s`.`%s` SET name = :NewName WHERE id = :RowID;',
+      [Database, Table]
+    );
 
     // Привязка параметров
     FDQuery.ParamByName('NewName').AsString := NewName;
@@ -657,6 +652,40 @@ begin
   except
     on E: Exception do
       FLastError := E.Message;
+  end;
+end;
+
+function TSQL.UpdateRow(Database, Table, Column: String; RowID: Integer; NewValue: Variant): Boolean;
+begin
+  Result := False;
+  try
+    FDQuery.Connection := FDConnection;
+
+    // Проверяем, чтобы имя столбца было корректным
+    if Column = '' then
+      raise Exception.Create('Column name cannot be empty.');
+
+    // Формируем SQL-запрос с динамическим указанием столбца
+    FDQuery.SQL.Text := Format(
+      'UPDATE `%s`.`%s` SET `%s` = :NewValue WHERE id = :RowID;',
+      [Database, Table, Column]
+    );
+
+    // Привязываем параметры
+    FDQuery.ParamByName('NewValue').Value := NewValue;
+    FDQuery.ParamByName('RowID').AsInteger := RowID;
+
+    // Выполняем запрос
+    FDQuery.ExecSQL;
+
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      FLastError := E.Message;
+      // Логируем ошибку
+      ShowMessage('Error: ' + E.Message);
+    end;
   end;
 end;
 
@@ -722,6 +751,42 @@ begin
   end;
 end;
 
+function TSQL.GetRowValuesByID(Database, Table: String; ID: Integer): TStringList;
+var
+  i: Integer;
+begin
+  Result := TStringList.Create;
+  try
+    FDQuery.Connection := FDConnection;
+
+    // Выбираем текущую базу данных
+    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
+
+    // Читаем все столбцы строки по ID
+    FDQuery.SQL.Text := Format('SELECT * FROM `%s` WHERE id = :ID;', [Table]);
+    FDQuery.ParamByName('ID').AsInteger := ID;
+
+    FDQuery.Open;
+
+    if not FDQuery.IsEmpty then
+    begin
+      // Перебираем все поля в строке и добавляем в TStringList
+      for i := 0 to FDQuery.FieldCount - 1 do
+      begin
+        Result.Add(Format('%s: %s', [FDQuery.Fields[i].FieldName, FDQuery.Fields[i].AsString]));
+      end;
+    end
+    else
+      raise Exception.CreateFmt('Record with ID %d in Table "%s" not found.', [ID, Table]);
+  except
+    on E: Exception do
+    begin
+      Result.Clear; // Очистим список при ошибке
+      FLastError := E.Message;
+    end;
+  end;
+end;
+
 function TSQL.GetLastRowValue(Database, Table: String; Column: String): String;
 begin
   Result := ''; // По умолчанию возвращаем пустую строку
@@ -782,10 +847,8 @@ begin
       FieldValues := '';
       for i := 0 to FDQuery.FieldCount - 1 do
       begin
-        FieldValues := FieldValues + FDQuery.Fields[i].FieldName + ': ' +
-          FDQuery.Fields[i].AsString + ' | ';
+        RowData.Add(Format('%s: %s', [FDQuery.Fields[i].FieldName, FDQuery.Fields[i].AsString]));
       end;
-      RowData.Add(FieldValues.TrimRight(['|', ' ']));
       FDQuery.Next;
     end;
   except
@@ -797,6 +860,88 @@ begin
 
   Result := RowData; // Возвращаем результат
 end;
+
+function TSQL.FindRowsByColumn(Database, Table, Column, Value: String): TStringList;
+var
+  RowData: TStringList;
+  i: Integer;
+  FieldValues: String;
+begin
+  RowData := TStringList.Create;
+  try
+    FDQuery.Connection := FDConnection;
+
+    // Выбираем текущую базу данных
+    FDConnection.ExecSQL(Format('USE `%s`', [Database]));
+
+    // Настраиваем SQL-запрос с динамическим указанием столбца
+    FDQuery.SQL.Text := Format(
+      'SELECT * FROM `%s` WHERE `%s` LIKE :Value',
+      [Table, Column]
+    );
+    FDQuery.ParamByName('Value').AsString := '%' + Value + '%'; // Подстрока для поиска
+    FDQuery.Open;
+
+    // Проверяем, есть ли строки
+    if FDQuery.IsEmpty then
+    begin
+      RowData.Add('No rows found.');
+      Exit(RowData);
+    end;
+
+    // Перебираем строки результата
+    while not FDQuery.Eof do
+    begin
+      FieldValues := '';
+      for i := 0 to FDQuery.FieldCount - 1 do
+      begin
+        FieldValues := FieldValues + Format('%s: %s; ', [FDQuery.Fields[i].FieldName, FDQuery.Fields[i].AsString]);
+      end;
+      RowData.Add(FieldValues);
+      FDQuery.Next;
+    end;
+  except
+    on E: Exception do
+    begin
+      RowData.Add('Error: ' + E.Message);
+    end;
+  end;
+
+  Result := RowData; // Возвращаем результат
+end;
+
+function TSQL.LoadTableIntoDBGrid(Database, Table: String; DataSource: TDataSource): Boolean;
+begin
+  Result := False; // По умолчанию возвращаем False, если что-то пошло не так
+  try
+    // Предполагаем, что FDQuery уже связан с соединением
+    FDQuery.Connection := FDConnection;
+
+    // Запрос с явным указанием базы данных в SQL (все данные из таблицы)
+    FDQuery.SQL.Text := Format('SELECT * FROM `%s`.`%s`;', [Database, Table]);
+
+    FDQuery.Open;
+
+    if FDQuery.IsEmpty then
+    begin
+      ShowMessage(Format('No records found in Table "%s".', [Table]));
+      Exit;
+    end;
+
+    // Подключаем FDQuery к DataSource и DataSource к DBGrid
+    DataSource.DataSet := FDQuery;
+
+    Result := True; // Успешная загрузка данных
+
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error: ' + E.Message); // Вывод ошибки
+    end;
+  end;
+end;
+
+
 
 
 

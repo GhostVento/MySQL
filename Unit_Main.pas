@@ -6,10 +6,11 @@ uses
   {Winapi}
   Winapi.Windows, Winapi.Messages,
   {System}
-  System.SysUtils, System.Variants, System.Classes,
+  System.SysUtils, System.Variants, System.Classes, System.Math,
   {Vcl}
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Vcl.ExtCtrls, sGroupBox, sEdit, Vcl.Menus, Vcl.ComCtrls;
+  Vcl.ExtCtrls, sGroupBox, sEdit, Vcl.Menus, Vcl.ComCtrls, Data.DB, Vcl.Grids,
+  Vcl.DBGrids;
 
 type
   TForm1 = class(TForm)
@@ -56,6 +57,15 @@ type
     Panel1: TPanel;
     Label1: TLabel;
     lbl_Status: TLabel;
+    G1_GetFullRowInfoByID: TMenuItem;
+    C2_ChangeValueByIdAndCol: TMenuItem;
+    S1_SearchByColValue: TMenuItem;
+    N2: TMenuItem;
+    L1_TableToGrid: TMenuItem;
+    GroupBox2: TGroupBox;
+    Splitter2: TSplitter;
+    DataSource1: TDataSource;
+    DBGrid1: TDBGrid;
     procedure btn_ConnectClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -82,6 +92,10 @@ type
     procedure C3_ChangeLastIDNameClick(Sender: TObject);
     procedure A1_AddRowClick(Sender: TObject);
     procedure S1_SearchRowsByNameClick(Sender: TObject);
+    procedure G1_GetFullRowInfoByIDClick(Sender: TObject);
+    procedure C2_ChangeValueByIdAndColClick(Sender: TObject);
+    procedure S1_SearchByColValueClick(Sender: TObject);
+    procedure L1_TableToGridClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -142,6 +156,34 @@ begin
       Table, Column));
 end;
 
+procedure TForm1.G1_GetFullRowInfoByIDClick(Sender: TObject);
+var
+  Database, Table: String;
+  RowID: Integer;
+  RowValues: TStringList;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  RowID := StrToInt(InputBox('ID', 'ID', ''));
+
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (RowID > 0) then
+  begin
+    RowValues := SQL.GetRowValuesByID(Database, Table, RowID);
+    if RowValues.Count > 0 then
+    begin
+      Memo.Lines.Assign(RowValues);
+      // Используем Assign, чтобы присвоить строки в Memo
+    end
+    else
+    begin
+      Memo.Lines.Add('No data found for the given ID.');
+    end;
+    RowValues.Free; // Не забываем освободить память
+  end
+  else
+    Memo.Lines.Add('Invalid input.');
+end;
+
 procedure TForm1.G1_GetInfoByIDClick(Sender: TObject);
 var
   Database, Table, Column, Value: String;
@@ -178,9 +220,47 @@ begin
   Column := InputBox('Column', 'Column', 'name');
   if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '')
   then
-
     Value := SQL.GetLastRowValue(Database, Table, Column);
   Memo.Lines.Add('Last ID Name: ' + Value);
+end;
+
+procedure AutoSizeDBGridColumns(DBGrid: TDBGrid);
+var
+  i, MaxWidth: Integer;
+  TempStr: String;
+begin
+  for i := 0 to DBGrid.Columns.Count - 1 do
+  begin
+    MaxWidth := 0; // Для каждой колонки начинаем с нуля
+    // Пройдемся по всем записям в DataSet и найдем максимальную длину строки в данной колонке
+    DBGrid.DataSource.DataSet.First;
+    while not DBGrid.DataSource.DataSet.Eof do
+    begin
+      TempStr := DBGrid.DataSource.DataSet.Fields[i].AsString;
+      MaxWidth := Max(MaxWidth, Length(TempStr)); // Сравниваем и сохраняем максимальную длину
+      DBGrid.DataSource.DataSet.Next;
+    end;
+
+    // Устанавливаем ширину колонки, добавляем небольшой отступ (например, 5 пикселей)
+    DBGrid.Columns[i].Width := MaxWidth * 9 + 10; // 7 - это приблизительная ширина символа в пикселях
+  end;
+end;
+
+procedure TForm1.L1_TableToGridClick(Sender: TObject);
+var
+  Database, Table: String;
+begin
+  // Input
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  // Check for empty input
+  if (Trim(Database) <> '') and (Trim(Table) <> '') then
+    // Output
+    if SQL.LoadTableIntoDBGrid(Database, Table, DataSource1) then
+      Memo.Lines.Add('Data loaded successfully!')
+    else
+      Memo.Lines.Add('Failed to load data.');
+  AutoSizeDBGridColumns(DBGrid1);
 end;
 
 procedure TForm1.R1_RenameTableClick(Sender: TObject);
@@ -221,6 +301,19 @@ begin
         ' successfully')
     else
       Memo.Lines.Add('Column ' + ColumnOld + ' was not renamed');
+end;
+
+procedure TForm1.S1_SearchByColValueClick(Sender: TObject);
+var
+  Database, Table, Column, Value: String;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column Name', 'Column Name', '');
+  Value := InputBox('Value', 'Value', '');
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '') and
+    (Trim(Value) <> '') then
+    Memo.Lines.Assign(SQL.FindRowsByColumn(Database, Table, Column, Value));
 end;
 
 procedure TForm1.S1_SearchRowsByNameClick(Sender: TObject);
@@ -397,6 +490,26 @@ begin
     (Trim(IntToStr(RowID)) <> '') and (Trim(NewName) <> '') then
     if SQL.UpdateRowName(Database, Table, RowID, NewName) then
       Memo.Lines.Add('Name updated successfully.');
+end;
+
+procedure TForm1.C2_ChangeValueByIdAndColClick(Sender: TObject);
+var
+  Database, Table, Column, NewValue: String;
+  RowID: Integer;
+begin
+  Database := InputBox('Database', 'Database', '');
+  Table := InputBox('Table Name', 'Table Name', '');
+  Column := InputBox('Column Name', 'Column Name', '');
+  RowID := StrToInt(InputBox('ID', 'ID', ''));
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '') and
+    (Trim(IntToStr(RowID)) <> '') then
+    NewValue := InputBox('New Value', 'New Value', SQL.GetRowValueByID(Database,
+      Table, RowID, Column));
+  if (Trim(Database) <> '') and (Trim(Table) <> '') and (Trim(Column) <> '') and
+    (Trim(IntToStr(RowID)) <> '') and (Trim(NewValue) <> '') then
+    if SQL.UpdateRow(Database, Table, Column, RowID, NewValue) then
+      Memo.Lines.Add('Value changed successfully.');
+
 end;
 
 procedure TForm1.C2_ColExistsClick(Sender: TObject);

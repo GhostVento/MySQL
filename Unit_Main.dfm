@@ -24,30 +24,32 @@ object Form1: TForm1
   end
   object GroupBox1: TGroupBox
     AlignWithMargins = True
-    Left = 142
+    Left = 544
     Top = 3
-    Width = 655
+    Width = 253
     Height = 410
-    Align = alClient
+    Align = alRight
     Caption = 'Logs'
     TabOrder = 0
-    ExplicitLeft = 768
-    ExplicitTop = 120
-    ExplicitWidth = 185
-    ExplicitHeight = 105
+    object Splitter2: TSplitter
+      Left = 2
+      Top = 17
+      Height = 391
+      ExplicitLeft = 64
+      ExplicitTop = 216
+      ExplicitHeight = 100
+    end
     object Memo: TMemo
       AlignWithMargins = True
-      Left = 5
+      Left = 8
       Top = 20
-      Width = 645
+      Width = 240
       Height = 385
       Align = alClient
       ScrollBars = ssVertical
       TabOrder = 0
-      ExplicitLeft = 10
-      ExplicitTop = 25
-      ExplicitWidth = 356
-      ExplicitHeight = 350
+      ExplicitLeft = 5
+      ExplicitWidth = 316
     end
   end
   object gbConnection: TGroupBox
@@ -59,9 +61,7 @@ object Form1: TForm1
     Align = alLeft
     Caption = 'Connection'
     TabOrder = 1
-    ExplicitLeft = 139
-    ExplicitTop = 8
-    ExplicitHeight = 375
+    ExplicitHeight = 401
     object edt_Driver: TsEdit
       AlignWithMargins = True
       Left = 5
@@ -172,8 +172,6 @@ object Form1: TForm1
       Caption = 'Connect'
       TabOrder = 7
       OnClick = btn_ConnectClick
-      ExplicitLeft = 0
-      ExplicitTop = 347
     end
   end
   object Panel1: TPanel
@@ -184,8 +182,8 @@ object Form1: TForm1
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 2
-    ExplicitLeft = 56
-    ExplicitTop = 419
+    ExplicitTop = 407
+    ExplicitWidth = 794
     object Label1: TLabel
       AlignWithMargins = True
       Left = 3
@@ -194,15 +192,13 @@ object Form1: TForm1
       Height = 16
       Align = alLeft
       Caption = 'Status: '
-      ExplicitLeft = 4
-      ExplicitTop = 4
       ExplicitHeight = 15
     end
     object lbl_Status: TLabel
       AlignWithMargins = True
       Left = 47
       Top = 3
-      Width = 185
+      Width = 72
       Height = 16
       Align = alLeft
       Caption = 'Disconnected'
@@ -214,9 +210,35 @@ object Form1: TForm1
       Font.Style = []
       ParentColor = False
       ParentFont = False
-      ExplicitLeft = 48
-      ExplicitTop = 4
-      ExplicitHeight = 14
+      ExplicitHeight = 15
+    end
+  end
+  object GroupBox2: TGroupBox
+    AlignWithMargins = True
+    Left = 142
+    Top = 3
+    Width = 396
+    Height = 410
+    Align = alClient
+    Caption = 'Grid'
+    TabOrder = 3
+    ExplicitLeft = 496
+    ExplicitWidth = 301
+    object DBGrid1: TDBGrid
+      AlignWithMargins = True
+      Left = 5
+      Top = 20
+      Width = 386
+      Height = 385
+      Align = alClient
+      DataSource = DataSource1
+      ReadOnly = True
+      TabOrder = 0
+      TitleFont.Charset = DEFAULT_CHARSET
+      TitleFont.Color = clWindowText
+      TitleFont.Height = -12
+      TitleFont.Name = 'Segoe UI'
+      TitleFont.Style = []
     end
   end
   object Timer: TTimer
@@ -302,30 +324,53 @@ object Form1: TForm1
     end
     object R1: TMenuItem
       Caption = 'Rows'
-      object G1_GetInfoByID: TMenuItem
-        Caption = 'Get Info by ID'
-        OnClick = G1_GetInfoByIDClick
-      end
-      object G2_GetLastIDInfo: TMenuItem
-        Caption = 'Get Last ID Info'
-        OnClick = G2_GetLastIDInfoClick
-      end
-      object C2_ChangeNameByID: TMenuItem
-        Caption = 'Change Name by ID'
-        OnClick = C2_ChangeNameByIDClick
-      end
-      object C3_ChangeLastIDName: TMenuItem
-        Caption = 'Change Last ID Name'
-        OnClick = C3_ChangeLastIDNameClick
-      end
       object A1_AddRow: TMenuItem
         Caption = 'Add Row'
         OnClick = A1_AddRowClick
+      end
+      object G1_GetInfoByID: TMenuItem
+        Caption = 'Get Value by ID+Col'
+        OnClick = G1_GetInfoByIDClick
+      end
+      object G2_GetLastIDInfo: TMenuItem
+        Caption = 'Get Value by Last ID+Col'
+        OnClick = G2_GetLastIDInfoClick
+      end
+      object C2_ChangeNameByID: TMenuItem
+        Caption = 'Change Value in '#39'name'#39' by ID'
+        OnClick = C2_ChangeNameByIDClick
+      end
+      object C3_ChangeLastIDName: TMenuItem
+        Caption = 'Change Value in '#39'name'#39' by Last ID'
+        OnClick = C3_ChangeLastIDNameClick
+      end
+      object C2_ChangeValueByIdAndCol: TMenuItem
+        Caption = 'Change Value by ID+Col'
+        OnClick = C2_ChangeValueByIdAndColClick
+      end
+      object G1_GetFullRowInfoByID: TMenuItem
+        Caption = 'Get Full Row Info by ID'
+        OnClick = G1_GetFullRowInfoByIDClick
       end
       object S1_SearchRowsByName: TMenuItem
         Caption = 'Search Rows by Name'
         OnClick = S1_SearchRowsByNameClick
       end
+      object S1_SearchByColValue: TMenuItem
+        Caption = 'Search Rows by Col+Value'
+        OnClick = S1_SearchByColValueClick
+      end
     end
+    object N2: TMenuItem
+      Caption = 'Grid'
+      object L1_TableToGrid: TMenuItem
+        Caption = 'Load Table to Grid'
+        OnClick = L1_TableToGridClick
+      end
+    end
+  end
+  object DataSource1: TDataSource
+    Left = 446
+    Top = 139
   end
 end
